@@ -1,9 +1,10 @@
 .vscode
 work
-AES_scetch
+*.jpg
 AES128.cr.mti
 AES128.mpf
-PKG_AES128
+PKG_AES128.vhd
 testreport
 tv*
 FSM*
+*.txt
