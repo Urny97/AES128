@@ -93,18 +93,18 @@ begin
   done <= done_sign;
 
   -- ARK mux
-  ARK_mux: process(contr_out_ARK_mux_sel)
+  ARK_mux: process(contr_out_ARK_mux_sel, reg_out_ARK_in, MC_out_ARK_mux_in, data_in)
   begin
     case contr_out_ARK_mux_sel is
       when "00" => ARK_mux_out_reg_in <= reg_out_ARK_in;
       when "01" => ARK_mux_out_reg_in <= MC_out_ARK_mux_in;
       when "11" => ARK_mux_out_reg_in <= data_in;
-      when others => ARK_mux_out_reg_in <= reg_out_ARK_in;
+      when others => ARK_mux_out_reg_in <= MC_out_ARK_mux_in;
     end case;
   end process;
 
   -- DataOut mux
-  DO_mux: process(contr_out_DO_mux_sel)
+  DO_mux: process(contr_out_DO_mux_sel, final_data_out, shiftrow_out_MC_in)
   begin
     case contr_out_DO_mux_sel is
       when "00" => DO_mux_out_reg_in <= (others => '0');
