@@ -8,3 +8,5 @@ testreport
 tv*
 FSM*
 *.txt
+*.wlf
+AES_128/
