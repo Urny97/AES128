@@ -24,14 +24,14 @@ architecture Behavioural of AES128 is
          final_data_out: STD_LOGIC_VECTOR(127 downto 0);
 
   signal rcon_contr_rcon_keys: STD_LOGIC_VECTOR(3 downto 0);
-  signal contr_out_ARK_mux_sel, contr_out_DO_mux_sel: STD_LOGIC_VECTOR(1 downto 0);
+  signal contr_out_ARK_mux_sel, contr_out_DO_mux_sel: STD_LOGIC;
   signal done_sign: STD_LOGIC;
 
   component Control_FSM is
     port(
     clock, reset, ce: in STD_LOGIC;
     roundcounter: out STD_LOGIC_VECTOR(3 downto 0);
-    ARK_mux_sel, DO_mux_sel: out STD_LOGIC_VECTOR(1 downto 0);
+    ARK_mux_sel, DO_mux_sel: out STD_LOGIC;
     done: out STD_LOGIC
     );
   end component;
@@ -96,9 +96,8 @@ begin
   ARK_mux: process(contr_out_ARK_mux_sel, reg_out_ARK_in, MC_out_ARK_mux_in, data_in)
   begin
     case contr_out_ARK_mux_sel is
-      when "00" => ARK_mux_out_reg_in <= reg_out_ARK_in;
-      when "01" => ARK_mux_out_reg_in <= MC_out_ARK_mux_in;
-      when "11" => ARK_mux_out_reg_in <= data_in;
+      when '0' => ARK_mux_out_reg_in <= reg_out_ARK_in;
+      when '1' => ARK_mux_out_reg_in <= data_in;
       when others => ARK_mux_out_reg_in <= MC_out_ARK_mux_in;
     end case;
   end process;
@@ -107,9 +106,8 @@ begin
   DO_mux: process(contr_out_DO_mux_sel, final_data_out, shiftrow_out_MC_in)
   begin
     case contr_out_DO_mux_sel is
-      when "00" => DO_mux_out_reg_in <= (others => '0');
-      when "01" => DO_mux_out_reg_in <= final_data_out;
-      when "11" => DO_mux_out_reg_in <= shiftrow_out_MC_in;
+      when '0' => DO_mux_out_reg_in <= (others => '0');
+      when '1' => DO_mux_out_reg_in <= shiftrow_out_MC_in;
       when others => DO_mux_out_reg_in <= (others => '0');
     end case;
   end process;
@@ -120,7 +118,9 @@ begin
     if reset = '1' then
       reg_out_ARK_in <= (others => '0');
     elsif rising_edge(clock) then
-      reg_out_ARK_in <= ARK_mux_out_reg_in;
+      if ce = '1' then
+        reg_out_ARK_in <= ARK_mux_out_reg_in;
+      end if;
     end if;
   end process;
 
@@ -130,7 +130,9 @@ begin
     if reset = '1' then
       final_data_out <= (others => '0');
     elsif rising_edge(clock) then
-      final_data_out <= DO_mux_out_reg_in;
+      if ce = '1' then
+        final_data_out <= DO_mux_out_reg_in;
+      end if;
     end if;
   end process;
 

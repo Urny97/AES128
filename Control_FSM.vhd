@@ -7,15 +7,13 @@ entity Control_FSM is
   port(
     clock, reset, ce: in STD_LOGIC;
     roundcounter: out STD_LOGIC_VECTOR(3 downto 0);
-    ARK_mux_sel, DO_mux_sel: out STD_LOGIC_VECTOR(1 downto 0);
+    ARK_mux_sel, DO_mux_sel: out STD_LOGIC;
     -- ARK_mux_sel
-      -- "11": de Plain_text wordt doorgelaten
-      -- "01": loopen
-      -- "00": waarde blijft behouden (er wordt niet geëncodeerd)
+      -- "1": de Plain_text wordt doorgelaten
+      -- "0": loopen
     -- DO_mux_sel
-      -- "11": het resultaat van de encryptie gaat naar data_out
-      -- "01": data_out behoudt de waarde van na de encryptie
-      -- "00": data_out is 0.
+      -- "1": het resultaat van de encryptie gaat naar data_out
+      -- "0": data_out is 0.
     done: out STD_LOGIC
   );
 end Control_FSM;
@@ -152,15 +150,15 @@ architecture Behavioural of Control_FSM is
   Control_out: process(curState)
   begin
     case curState is
-      when sIdle => DO_mux_sel <= "00"; ARK_mux_sel <= "00"; done_reg <= '0';
+      when sIdle => DO_mux_sel <= '0'; ARK_mux_sel <= '0'; done_reg <= '0';
 
-      when sFirstRound => DO_mux_sel <= "00"; ARK_mux_sel <= "11"; done_reg <= '0';
+      when sFirstRound => DO_mux_sel <= '0'; ARK_mux_sel <= '1'; done_reg <= '0';
 
-      when sLoopUntil9 => DO_mux_sel <= "00"; ARK_mux_sel <= "01"; done_reg <= '0';
+      when sLoopUntil9 => DO_mux_sel <= '0'; ARK_mux_sel <= '0'; done_reg <= '0';
 
-      when sLastRound => DO_mux_sel <= "11"; ARK_mux_sel <= "01"; done_reg <= '0';
+      when sLastRound => DO_mux_sel <= '1'; ARK_mux_sel <= '0'; done_reg <= '0';
 
-      when sDone => DO_mux_sel <= "01"; ARK_mux_sel <= "01"; done_reg <= '1';
+      when sDone => DO_mux_sel <= '1'; ARK_mux_sel <= '0'; done_reg <= '1';
     end case;
   end process;
 
