@@ -19,8 +19,8 @@ architecture Behavioural of AES128 is
 
   -- signalen om componenten aan elkaar te hangen
   signal key_out_ARK_in, ARK_out_SB_in, SB_out_shiftrow_in,
-         shiftrow_out_MC_in, MC_out_ARK_mux_in,
-         reg_out_ARK_in, ARK_mux_out_reg_in, DO_mux_out_reg_in,
+         shiftrow_out_MC_in, MC_out_reg_in,
+         ARK_mux_out_ARK_in, ARK_mux_out_reg_in, DO_mux_out_reg_in,
          final_data_out: STD_LOGIC_VECTOR(127 downto 0);
 
   signal rcon_contr_rcon_keys: STD_LOGIC_VECTOR(3 downto 0);
@@ -84,22 +84,22 @@ begin
   Ctl_FSM: Control_FSM port map(clock, reset, ce, rcon_contr_rcon_keys,
                            contr_out_ARK_mux_sel, contr_out_DO_mux_sel,
                            done_sign);
-  ARK: AddRoundKey port map(key_out_ARK_in, reg_out_ARK_in, ARK_out_SB_in);
+  ARK: AddRoundKey port map(key_out_ARK_in, ARK_mux_out_ARK_in, ARK_out_SB_in);
   SB: SubBytes port map(ARK_out_SB_in, SB_out_shiftrow_in);
   SR: ShiftRow port map(SB_out_shiftrow_in, shiftrow_out_MC_in);
-  MC: MixColumn port map(shiftrow_out_MC_in, MC_out_ARK_mux_in);
+  MC: MixColumn port map(shiftrow_out_MC_in, MC_out_reg_in);
 
   data_out <= final_data_out;
   done <= done_sign;
 
   -- ARK mux
-  ARK_mux: process(contr_out_ARK_mux_sel, reg_out_ARK_in, MC_out_ARK_mux_in, data_in)
+  ARK_mux: process(contr_out_ARK_mux_sel, ARK_mux_out_ARK_in, MC_out_reg_in, data_in)
   begin
     case contr_out_ARK_mux_sel is
-      when "00" => ARK_mux_out_reg_in <= reg_out_ARK_in;
-      when "01" => ARK_mux_out_reg_in <= MC_out_ARK_mux_in;
+      when "00" => ARK_mux_out_reg_in <= ARK_mux_out_ARK_in;
+      when "01" => ARK_mux_out_reg_in <= MC_out_reg_in;
       when "11" => ARK_mux_out_reg_in <= data_in;
-      when others => ARK_mux_out_reg_in <= MC_out_ARK_mux_in;
+      when others => ARK_mux_out_reg_in <= MC_out_reg_in;
     end case;
   end process;
 
@@ -118,9 +118,13 @@ begin
   ARK_reg: process(clock, reset)
   begin
     if reset = '1' then
-      reg_out_ARK_in <= (others => '0');
+      data_in <= (others => '0');
+      MC_out_reg_in <= (others => '0');
+      reg_out_ARK_mux_in <= (others => '0');
     elsif rising_edge(clock) then
-      reg_out_ARK_in <= ARK_mux_out_reg_in;
+      data_in_reg_out <= data_in;
+      MC_out_reg_in <= MC_out_reg_out;
+      reg_out_ARK_mux_in <= reg_out_ARK_mux_in
     end if;
   end process;
 
