@@ -98,12 +98,12 @@ begin
     case contr_out_ARK_mux_sel is
       when '0' => ARK_mux_out_reg_in <= reg_out_ARK_in;
       when '1' => ARK_mux_out_reg_in <= data_in;
-      when others => ARK_mux_out_reg_in <= MC_out_ARK_mux_in;
+      when others => ARK_mux_out_reg_in <= reg_out_ARK_in;
     end case;
   end process;
 
   -- DataOut mux
-  DO_mux: process(contr_out_DO_mux_sel, final_data_out, shiftrow_out_MC_in)
+  DO_mux: process(contr_out_DO_mux_sel, shiftrow_out_MC_in)
   begin
     case contr_out_DO_mux_sel is
       when '0' => DO_mux_out_reg_in <= (others => '0');
