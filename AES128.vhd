@@ -19,9 +19,10 @@ architecture Behavioural of AES128 is
 
   -- signalen om componenten aan elkaar te hangen
   signal key_out_ARK_in, ARK_out_SB_in, SB_out_shiftrow_in,
-         shiftrow_out_MC_in, MC_out_reg_in, MC_out_reg_out,
-         ARK_mux_out_ARK_in, DO_mux_out_reg_in, data_in_reg_out,
-         final_data_out, reg_out_ARK_mux_in: STD_LOGIC_VECTOR(127 downto 0);
+         SR_out_MC_in, MC_out_reg_in, MC_out_reg_out,
+         ARK_mux_out_ARK_in, data_in_reg_out,
+         final_data_out, reg_out_ARK_mux_in, reg_out_DO_mux_in,
+         SR_out_MC_in_reg_out, zero_reg_out: STD_LOGIC_VECTOR(127 downto 0);
 
   signal rcon_contr_rcon_keys: STD_LOGIC_VECTOR(3 downto 0);
   signal contr_out_ARK_mux_sel, contr_out_DO_mux_sel: STD_LOGIC_VECTOR(1 downto 0);
@@ -86,8 +87,8 @@ begin
                            done_sign);
   ARK: AddRoundKey port map(key_out_ARK_in, ARK_mux_out_ARK_in, ARK_out_SB_in);
   SB: SubBytes port map(ARK_out_SB_in, SB_out_shiftrow_in);
-  SR: ShiftRow port map(SB_out_shiftrow_in, shiftrow_out_MC_in);
-  MC: MixColumn port map(shiftrow_out_MC_in, MC_out_reg_in);
+  SR: ShiftRow port map(SB_out_shiftrow_in, SR_out_MC_in);
+  MC: MixColumn port map(SR_out_MC_in, MC_out_reg_in);
 
   data_out <= final_data_out;
   done <= done_sign;
@@ -104,13 +105,13 @@ begin
   end process;
 
   -- DataOut mux
-  DO_mux: process(contr_out_DO_mux_sel, final_data_out, shiftrow_out_MC_in)
+  DO_mux: process(contr_out_DO_mux_sel, zero_reg_out, reg_out_DO_mux_in, SR_out_MC_in_reg_out)
   begin
     case contr_out_DO_mux_sel is
-      when "00" => DO_mux_out_reg_in <= (others => '0');
-      when "01" => DO_mux_out_reg_in <= final_data_out;
-      when "11" => DO_mux_out_reg_in <= shiftrow_out_MC_in;
-      when others => DO_mux_out_reg_in <= (others => '0');
+      when "00" => final_data_out <= zero_reg_out;
+      when "01" => final_data_out <= reg_out_DO_mux_in;
+      when "11" => final_data_out <= SR_out_MC_in_reg_out;
+      when others => final_data_out <= (others => '0');
     end case;
   end process;
 
@@ -132,9 +133,12 @@ begin
   DO_reg: process(clock, reset)
   begin
     if reset = '1' then
-      final_data_out <= (others => '0');
+      reg_out_DO_mux_in <= (others => '0');
+      SR_out_MC_in_reg_out <= (others => '0');
     elsif rising_edge(clock) then
-      final_data_out <= DO_mux_out_reg_in;
+      zero_reg_out <= (others => '0');
+      reg_out_DO_mux_in <= final_data_out;
+      SR_out_MC_in_reg_out <= SR_out_MC_in;
     end if;
   end process;
 
