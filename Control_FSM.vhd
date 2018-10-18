@@ -7,7 +7,7 @@ entity Control_FSM is
   port(
     clock, reset, ce: in STD_LOGIC;
     roundcounter: out STD_LOGIC_VECTOR(3 downto 0);
-    ARK_mux_sel, DO_mux_sel, clear: out STD_LOGIC_VECTOR(1 downto 0);
+    ARK_mux_sel, DO_mux_sel: out STD_LOGIC_VECTOR(1 downto 0);
     -- ARK_mux_sel
       -- "11": de Plain_text wordt doorgelaten
       -- "01": loopen
@@ -16,7 +16,7 @@ entity Control_FSM is
       -- "11": het resultaat van de encryptie gaat naar data_out
       -- "01": data_out behoudt de waarde van na de encryptie
       -- "00": data_out is 0.
-    done: out STD_LOGIC
+    done, clear: out STD_LOGIC
   );
 end Control_FSM;
 
@@ -31,11 +31,12 @@ architecture Behavioural of Control_FSM is
 
   signal curState, nxtState: tStates;
   signal rcon_reg: STD_LOGIC_VECTOR(3 downto 0) := "0000";
-  signal done_reg, count_enable, clear: STD_LOGIC;
+  signal done_reg, count_enable, clear_sign: STD_LOGIC;
 
   begin
     roundcounter <= rcon_reg;
     done <= done_reg;
+    clear <= clear_sign;
 
 -- Increment Counter
   incr_ctr: process(clock, reset)
@@ -148,19 +149,19 @@ architecture Behavioural of Control_FSM is
   begin
     case curState is
       when sIdle => DO_mux_sel <= "00"; ARK_mux_sel <= "00"; done_reg <= '0'; 
-                    clear <= '1'; count_enable <= '0';
+                    clear_sign <= '1'; count_enable <= '0';
 
       when sFirstRound => DO_mux_sel <= "00"; ARK_mux_sel <= "11"; done_reg <= '0';
-                          clear <= '0'; count_enable <= '1';
+                          clear_sign <= '0'; count_enable <= '1';
 
       when sLoopUntil9 => DO_mux_sel <= "00"; ARK_mux_sel <= "01"; done_reg <= '0';
-                          clear <= '0'; count_enable <= '1';
+                          clear_sign <= '0'; count_enable <= '1';
 
       when sLastRound => DO_mux_sel <= "11"; ARK_mux_sel <= "01"; done_reg <= '0';
-                         clear <= '0'; count_enable <= '1';
+                         clear_sign <= '0'; count_enable <= '1';
 
       when sDone => DO_mux_sel <= "01"; ARK_mux_sel <= "01"; done_reg <= '1';
-                    clear <= '0'; count_enable <= '0';
+                    clear_sign <= '0'; count_enable <= '0';
     end case;
   end process;
 

@@ -26,14 +26,14 @@ architecture Behavioural of AES128 is
 
   signal rcon_contr_rcon_keys: STD_LOGIC_VECTOR(3 downto 0);
   signal contr_out_ARK_mux_sel, contr_out_DO_mux_sel: STD_LOGIC_VECTOR(1 downto 0);
-  signal done_sign: STD_LOGIC;
+  signal done_sign, clear_sign: STD_LOGIC;
 
   component Control_FSM is
     port(
     clock, reset, ce: in STD_LOGIC;
     roundcounter: out STD_LOGIC_VECTOR(3 downto 0);
     ARK_mux_sel, DO_mux_sel: out STD_LOGIC_VECTOR(1 downto 0);
-    done: out STD_LOGIC
+    done, clear: out STD_LOGIC
     );
   end component;
 
@@ -84,7 +84,7 @@ begin
                             key_out_ARK_in);
   Ctl_FSM: Control_FSM port map(clock, reset, ce, rcon_contr_rcon_keys,
                            contr_out_ARK_mux_sel, contr_out_DO_mux_sel,
-                           done_sign);
+                           done_sign, clear_sign);
   ARK: AddRoundKey port map(key_out_ARK_in, ARK_mux_out_ARK_in, ARK_out_SB_in);
   SB: SubBytes port map(ARK_out_SB_in, SB_out_shiftrow_in);
   SR: ShiftRow port map(SB_out_shiftrow_in, SR_out_MC_in);
@@ -123,9 +123,15 @@ begin
       MC_out_reg_out <= (others => '0');
       reg_out_ARK_mux_in <= (others => '0');
     elsif rising_edge(clock) then
-      data_in_reg_out <= data_in;
-      MC_out_reg_out <= MC_out_reg_in;
-      reg_out_ARK_mux_in <= ARK_mux_out_ARK_in;
+      if clear_sign = '1' then
+        data_in_reg_out <= (others => '0');
+        MC_out_reg_out <= (others => '0');
+        reg_out_ARK_mux_in <= (others => '0');
+      else
+        data_in_reg_out <= data_in;
+        MC_out_reg_out <= MC_out_reg_in;
+        reg_out_ARK_mux_in <= ARK_mux_out_ARK_in;
+      end if;
     end if;
   end process;
 
@@ -137,8 +143,13 @@ begin
       SR_out_MC_in_reg_out <= (others => '0');
     elsif rising_edge(clock) then
       zero_reg_out <= (others => '0');
-      reg_out_DO_mux_in <= final_data_out;
-      SR_out_MC_in_reg_out <= SR_out_MC_in;
+      if clear_sign = '1' then
+        reg_out_DO_mux_in <= (others => '0');
+        SR_out_MC_in_reg_out <= (others => '0');
+      else
+        reg_out_DO_mux_in <= final_data_out;
+        SR_out_MC_in_reg_out <= SR_out_MC_in;
+      end if;
     end if;
   end process;
 
