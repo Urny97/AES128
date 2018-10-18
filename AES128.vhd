@@ -110,7 +110,7 @@ begin
     case contr_out_DO_mux_sel is
       when "00" => final_data_out <= zero_reg_out;
       when "01" => final_data_out <= reg_out_DO_mux_in;
-      when "11" => final_data_out <= SR_out_MC_in_reg_out;
+      when "11" => final_data_out <= SR_out_MC_in;
       when others => final_data_out <= (others => '0');
     end case;
   end process;

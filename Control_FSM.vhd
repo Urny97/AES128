@@ -7,7 +7,7 @@ entity Control_FSM is
   port(
     clock, reset, ce: in STD_LOGIC;
     roundcounter: out STD_LOGIC_VECTOR(3 downto 0);
-    ARK_mux_sel, DO_mux_sel: out STD_LOGIC_VECTOR(1 downto 0);
+    ARK_mux_sel, DO_mux_sel, clear: out STD_LOGIC_VECTOR(1 downto 0);
     -- ARK_mux_sel
       -- "11": de Plain_text wordt doorgelaten
       -- "01": loopen
@@ -31,7 +31,7 @@ architecture Behavioural of Control_FSM is
 
   signal curState, nxtState: tStates;
   signal rcon_reg: STD_LOGIC_VECTOR(3 downto 0) := "0000";
-  signal done_reg, count_enable: STD_LOGIC;
+  signal done_reg, count_enable, clear: STD_LOGIC;
 
   begin
     roundcounter <= rcon_reg;
@@ -70,6 +70,7 @@ architecture Behavioural of Control_FSM is
   begin
     case curState is
         when sIdle =>
+        clear <= '1';
         count_enable <= '0';
           if reset = '1' then
             nxtState <= sIdle;
@@ -84,6 +85,7 @@ architecture Behavioural of Control_FSM is
           end if;
 
         when sFirstRound =>
+        clear <= '0';
         count_enable <= '1';
           if reset = '1' then
             nxtState <= sIdle;
@@ -98,6 +100,7 @@ architecture Behavioural of Control_FSM is
           end if;
 
         when sLoopUntil9 =>
+        clear <= '0';
         count_enable <= '1';
           if reset = '1' then
             nxtState <= sIdle;
@@ -112,6 +115,7 @@ architecture Behavioural of Control_FSM is
           end if;
 
         when sLastRound =>
+        clear <= '0';
         count_enable <= '1';
           if reset = '1' then
             nxtState <= sIdle;
@@ -124,6 +128,7 @@ architecture Behavioural of Control_FSM is
           end if;
 
         when sDone =>
+        clear <= '0';
         count_enable <= '0';
           if reset = '1' then
             nxtState <= sIdle;
@@ -136,6 +141,8 @@ architecture Behavioural of Control_FSM is
           end if;
 
         when others =>
+        clear <= '1';
+        count_enable <= '0';
           if reset = '1' then
             nxtState <= sIdle;
           else
