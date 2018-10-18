@@ -29,6 +29,7 @@ architecture Behavioural of Control_FSM is
     roundcounter <= rcon_reg;
     done <= done_reg;
     clear <= clear_sign;
+    hold_data_out <= hold_data_out_sign;
 
 -- Increment Counter
   incr_ctr: process(clock, reset)
