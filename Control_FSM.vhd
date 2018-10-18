@@ -70,8 +70,6 @@ architecture Behavioural of Control_FSM is
   begin
     case curState is
         when sIdle =>
-        clear <= '1';
-        count_enable <= '0';
           if reset = '1' then
             nxtState <= sIdle;
           else
@@ -85,8 +83,6 @@ architecture Behavioural of Control_FSM is
           end if;
 
         when sFirstRound =>
-        clear <= '0';
-        count_enable <= '1';
           if reset = '1' then
             nxtState <= sIdle;
           else
@@ -100,8 +96,6 @@ architecture Behavioural of Control_FSM is
           end if;
 
         when sLoopUntil9 =>
-        clear <= '0';
-        count_enable <= '1';
           if reset = '1' then
             nxtState <= sIdle;
           else
@@ -115,8 +109,6 @@ architecture Behavioural of Control_FSM is
           end if;
 
         when sLastRound =>
-        clear <= '0';
-        count_enable <= '1';
           if reset = '1' then
             nxtState <= sIdle;
           else
@@ -128,8 +120,6 @@ architecture Behavioural of Control_FSM is
           end if;
 
         when sDone =>
-        clear <= '0';
-        count_enable <= '0';
           if reset = '1' then
             nxtState <= sIdle;
           else
@@ -141,8 +131,6 @@ architecture Behavioural of Control_FSM is
           end if;
 
         when others =>
-        clear <= '1';
-        count_enable <= '0';
           if reset = '1' then
             nxtState <= sIdle;
           else
@@ -159,15 +147,20 @@ architecture Behavioural of Control_FSM is
   Control_out: process(curState)
   begin
     case curState is
-      when sIdle => DO_mux_sel <= "00"; ARK_mux_sel <= "00"; done_reg <= '0';
+      when sIdle => DO_mux_sel <= "00"; ARK_mux_sel <= "00"; done_reg <= '0'; 
+                    clear <= '1'; count_enable <= '0';
 
       when sFirstRound => DO_mux_sel <= "00"; ARK_mux_sel <= "11"; done_reg <= '0';
+                          clear <= '0'; count_enable <= '1';
 
       when sLoopUntil9 => DO_mux_sel <= "00"; ARK_mux_sel <= "01"; done_reg <= '0';
+                          clear <= '0'; count_enable <= '1';
 
       when sLastRound => DO_mux_sel <= "11"; ARK_mux_sel <= "01"; done_reg <= '0';
+                         clear <= '0'; count_enable <= '1';
 
       when sDone => DO_mux_sel <= "01"; ARK_mux_sel <= "01"; done_reg <= '1';
+                    clear <= '0'; count_enable <= '0';
     end case;
   end process;
 
