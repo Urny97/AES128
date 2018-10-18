@@ -115,7 +115,8 @@ begin
   end process;
 
   -- ARK_reg
-  ARK_reg: process(clock, reset, clear_sign, hold_data_out_sign)
+  ARK_reg: process(clock, reset, clear_sign, hold_data_out_sign, data_in,
+                   MC_out_reg_in, ARK_mux_out_ARK_in)
   begin
     if reset = '1' then
       data_in_reg_out <= (others => '0');
