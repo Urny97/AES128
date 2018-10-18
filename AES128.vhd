@@ -21,7 +21,8 @@ architecture Behavioural of AES128 is
   signal key_out_ARK_in, ARK_out_SB_in, SB_out_shiftrow_in,
          SR_out_MC_in, MC_out_reg_in, MC_out_reg_out,
          ARK_mux_out_ARK_in, data_in_reg_out,
-         final_data_out, reg_out_ARK_mux_in: STD_LOGIC_VECTOR(127 downto 0);
+         final_data_out, reg_out_ARK_mux_in,
+         SR_reg_out: STD_LOGIC_VECTOR(127 downto 0);
 
   signal rcon_contr_rcon_keys: STD_LOGIC_VECTOR(3 downto 0);
   signal contr_out_ARK_mux_sel: STD_LOGIC_VECTOR(1 downto 0);
@@ -105,17 +106,17 @@ begin
   end process;
 
   -- DataOut mux
-  DO_mux: process(contr_out_DO_mux_sel, SR_out_MC_in)
+  DO_mux: process(contr_out_DO_mux_sel, SR_reg_out)
   begin
     case contr_out_DO_mux_sel is
       when '0' => final_data_out <= (others => '0');
-      when '1' => final_data_out <= SR_out_MC_in;
+      when '1' => final_data_out <= SR_reg_out;
       when others => final_data_out <= (others => '0');
     end case;
   end process;
 
   -- ARK_reg
-  ARK_reg: process(clock, reset, clear_sign, hold_data_out_sign, data_in,
+  ARK_reg: process(clock, reset, clear_sign, data_in,
                    MC_out_reg_in, ARK_mux_out_ARK_in)
   begin
     if reset = '1' then
@@ -127,14 +128,22 @@ begin
         data_in_reg_out <= (others => '0');
         MC_out_reg_out <= (others => '0');
         reg_out_ARK_mux_in <= (others => '0');
-      elsif hold_data_out_sign = '1' then
-        data_in_reg_out <= data_in_reg_out;
-        MC_out_reg_out <= MC_out_reg_out;
-        reg_out_ARK_mux_in <= reg_out_ARK_mux_in;
       else
         data_in_reg_out <= data_in;
         MC_out_reg_out <= MC_out_reg_in;
         reg_out_ARK_mux_in <= ARK_mux_out_ARK_in;
+      end if;
+    end if;
+  end process;
+
+  -- SR_reg
+  SR_reg: process(clock, reset, hold_data_out_sign)
+  begin
+    if reset = '1' then
+      SR_reg_out <= (others => '0');
+    elsif rising_edge(clock) then
+      if hold_data_out_sign = '1' then
+        SR_reg_out <= SR_out_MC_in;
       end if;
     end if;
   end process;
