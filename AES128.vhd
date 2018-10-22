@@ -20,7 +20,8 @@ architecture Behavioural of AES128 is
   -- signalen om componenten aan elkaar te hangen
   signal key_out_ARK_in, ARK_out_reg_in, SB_out_shiftrow_in,
          SR_out_MC_in, ARK_mux_out_ARK_in, MC_out_ARK_mux_in,
-         final_data_out, reg_out_SB_in, DI_reg_out: STD_LOGIC_VECTOR(127 downto 0);
+         final_data_out, reg_out_SB_in, DI_reg_out,
+         DO_reg_out: STD_LOGIC_VECTOR(127 downto 0);
 
   signal rcon_contr_rcon_keys: STD_LOGIC_VECTOR(3 downto 0);
   signal contr_out_ARK_mux_sel: STD_LOGIC_VECTOR(1 downto 0);
@@ -110,21 +111,23 @@ begin
   begin
     case contr_out_DO_mux_sel is
       when '0' => final_data_out <= (others => '0');
-      when '1' => final_data_out <= ARK_out_reg_in;
+      when '1' => final_data_out <= DO_reg_out;
       when others => final_data_out <= (others => '0');
     end case;
   end process;
 
   -- SB_reg
-  SB_reg: process(clock, reset, clear_sign, ARK_out_reg_in, hold_data_out_sign)
+  SB_reg: process(clock, reset, clear_sign, ARK_out_reg_in)
   begin
     if reset = '1' then
       reg_out_SB_in <= (others => '0');
     elsif rising_edge(clock) then
-      if clear_sign = '1' then
-        reg_out_SB_in <= (others => '0');
-      elsif hold_data_out_sign = '0' then
-        reg_out_SB_in <= ARK_out_reg_in;
+      if ce = '1' then
+        if clear_sign = '1' then
+          reg_out_SB_in <= (others => '0');
+        else
+          reg_out_SB_in <= ARK_out_reg_in;
+        end if;
       end if;
     end if;
   end process;
@@ -135,8 +138,24 @@ begin
     if reset = '1' then
       DI_reg_out <= (others => '0');
     elsif rising_edge(clock) then
-      if read_data_in_sign = '1' then
-        DI_reg_out <= data_in;
+      if ce = '1' then
+        if read_data_in_sign = '1' then
+          DI_reg_out <= data_in;
+        end if;
+      end if;
+    end if;
+  end process;
+
+  --data_out_reg
+  DO_reg: process(clock, reset, ARK_out_reg_in, hold_data_out_sign)
+  begin
+    if reset = '1' then
+      DO_reg_out <= (others => '0');
+    elsif rising_edge(clock) then
+      if ce = '1' then  
+        if hold_data_out_sign = '1' then
+          DO_reg_out <= ARK_out_reg_in;
+        end if;
       end if;
     end if;
   end process;

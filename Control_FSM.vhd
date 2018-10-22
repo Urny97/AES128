@@ -162,7 +162,7 @@ architecture Behavioural of Control_FSM is
 
       when sDone => DO_mux_sel <= '1'; ARK_mux_sel <= "11"; done_sign <= '1';
                     clear_sign <= '0'; count_enable <= '0'; 
-                    hold_data_out_sign <= '1'; read_data_in_sign <= '0';
+                    hold_data_out_sign <= '0'; read_data_in_sign <= '0';
     end case;
   end process;
 

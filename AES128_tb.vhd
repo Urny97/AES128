@@ -154,6 +154,7 @@ begin
     key <= x"2b7e151628aed2a6abf7158809cf4f3c";
     ce <= '1';
     wait until done = '1';
+    wait for clock_period/2;
     if(data_out /= x"3925841d02dc09fbdc118597196a0b32") then testreport(testnumber) <= testreport(testnumber) + 1; end if;
     wait for clock_period;
 	 ce <= '0';
@@ -165,6 +166,7 @@ begin
     key <= x"2b7e151628aed2a6abf7158809cf4f3c";
     ce <= '1';
     wait until done = '1';
+    wait for clock_period/2;
     if(data_out /= x"3925841d02dc09fbdc118597196a0b32") then testreport(testnumber) <= testreport(testnumber) + 1; end if;
 	 wait for clock_period;
     ce <= '0';
@@ -180,6 +182,7 @@ begin
     wait for clock_period*50;
     ce <= '1';
     wait until done = '1';
+    wait for clock_period/2;
     if(data_out /= x"3925841d02dc09fbdc118597196a0b32") then testreport(testnumber) <= testreport(testnumber) + 4; end if;
 	 wait for clock_period;
     ce <= '0';
@@ -191,12 +194,14 @@ begin
     key <= x"2b7e151628aed2a6abf7158809cf4f3c";
     ce <= '1';
     wait until done = '1';
+    wait for clock_period/2;
     if(data_out /= x"3925841d02dc09fbdc118597196a0b32") then testreport(testnumber) <= testreport(testnumber) + 1; end if;
     wait for clock_period;
 	 ce <= '0';
     wait for clock_period;
     ce <= '1';
     wait until done = '1';
+    wait for clock_period/2;
     if(data_out /= x"3925841d02dc09fbdc118597196a0b32") then testreport(testnumber) <= testreport(testnumber) + 2; end if;
 	 wait for clock_period;
     ce <= '0';
@@ -212,6 +217,7 @@ begin
     wait for clock_period*5;
     reset <= '0';
     wait until done = '1';
+    wait for clock_period/2;
     if(data_out /= x"3925841d02dc09fbdc118597196a0b32") then testreport(testnumber) <= testreport(testnumber) + 1; end if;
 	 wait for clock_period;
     ce <= '0';
@@ -224,6 +230,7 @@ begin
         key <= tvcatalog(i-100).key;
         ce <= '1';
         wait until done = '1';
+        wait for clock_period/2;
         if(data_out /= tvcatalog(i-100).output) then testreport(testnumber) <= testreport(testnumber) + 1; end if;
 		  wait for clock_period;
         ce <= '0';
