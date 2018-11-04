@@ -3,7 +3,6 @@ work
 *.jpg
 AES128.cr.mti
 AES128.mpf
-PKG_AES128.vhd
 testreport
 tv*
 FSM*
