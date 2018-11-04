@@ -7,6 +7,7 @@ testreport
 tv*
 FSM*
 *.txt
+!tv_output.txt
 *.wlf
 AES_128/
 *.vstf
