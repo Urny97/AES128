@@ -7,6 +7,7 @@ entity Control_FSM is
   port(
     clock, reset, ce: in STD_LOGIC;
     roundcounter: out STD_LOGIC_VECTOR(3 downto 0);
+    which_column: out STD_LOGIC_VECTOR(2 downto 0)
     ARK_mux_sel: out STD_LOGIC_VECTOR(1 downto 0);
     DO_mux_sel, done, clear, hold_data_out,
     read_data_in: out STD_LOGIC
@@ -24,6 +25,7 @@ architecture Behavioural of Control_FSM is
 
   signal curState, nxtState: tStates;
   signal rcon_reg: STD_LOGIC_VECTOR(3 downto 0) := "0000";
+  signal which_column_sign: STD_LOGIC_VECTOR(2 downto 0)
   signal done_sign, count_enable, clear_sign, hold_data_out_sign,
   read_data_in_sign: STD_LOGIC;
 
@@ -33,6 +35,7 @@ architecture Behavioural of Control_FSM is
     clear <= clear_sign;
     hold_data_out <= hold_data_out_sign;
     read_data_in <= read_data_in_sign;
+    which_column <= which_column_sign
 
 -- Increment Counter
   incr_ctr: process(clock, reset)
@@ -138,6 +141,24 @@ architecture Behavioural of Control_FSM is
             end if;
           end if;
     end case;
+  end process;
+
+  -- Column counter
+  Column_counter: process(clock, reset)
+  begin
+    if reset = '1' then
+      which_column_sign <= "001";
+    elsif rising_edge(clock) then
+      if ce = '1' and count_enable = '1' then
+        if which_column_sign = "100" then
+          which_column_sign <= "001";
+        else
+          which_column_sign <= which_column_sign + 1;
+        end if;
+      else
+        which_column_sign <= which_column_sign;
+      end if;
+    end if;
   end process;
 
   -- Output Function

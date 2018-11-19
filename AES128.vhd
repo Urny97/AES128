@@ -52,7 +52,7 @@ architecture Behavioural of AES128 is
   component AddRoundKey is
     port(
       key_in: in std_logic_vector(127 downto 0);
-      text_in: in std_logic_vector(127 downto 0);
+      data_in: in std_logic_vector(127 downto 0);
       ARK_out: out std_logic_vector(127 downto 0)
     );
   end component;
