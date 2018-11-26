@@ -14,16 +14,16 @@ begin
   process(key_in, data_in, which_column)
   begin
     case (which_column) is
-    -- 1e kolom
-    when "001" => ARK_out <= key_in(127 downto 96) xor data_in;
-    -- 2e kolom
-    when "010" => ARK_out <= key_in(95 downto 64) xor data_in;
-    -- 3e kolom
-    when "011" => ARK_out <= key_in(63 downto 32) xor data_in;
-    -- 4e kolom
-    when "100" => ARK_out <= key_in(31 downto 0) xor data_in;
-    when others =>
-    
+      -- 1e kolom
+      when "001" => ARK_out <= key_in(127 downto 96) xor data_in;
+      -- 2e kolom
+      when "010" => ARK_out <= key_in(95 downto 64) xor data_in;
+      -- 3e kolom
+      when "011" => ARK_out <= key_in(63 downto 32) xor data_in;
+      -- 4e kolom
+      when "100" => ARK_out <= key_in(31 downto 0) xor data_in;
+      when others => ARK_out <= (others => '0');
+    end case;
   end process;
 
 end;
