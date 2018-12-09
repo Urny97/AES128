@@ -7,7 +7,7 @@ entity Control_FSM is
   port(
     clock, reset, ce: in STD_LOGIC;
     roundcounter: out STD_LOGIC_VECTOR(3 downto 0);
-    which_column: out STD_LOGIC_VECTOR(2 downto 0)
+    which_column: out STD_LOGIC_VECTOR(2 downto 0);
     ARK_mux_sel: out STD_LOGIC_VECTOR(1 downto 0);
     DO_mux_sel, done, clear, hold_data_out,
     read_data_in, append: out STD_LOGIC
@@ -24,8 +24,8 @@ architecture Behavioural of Control_FSM is
   -- Done: de chip is klaar met de encryptie
 
   signal curState, nxtState: tStates;
-  signal rcon_reg: STD_LOGIC_VECTOR(3 downto 0) := "0000";
-  signal which_column_sign: STD_LOGIC_VECTOR(2 downto 0)
+  signal rcon_reg, clk_ctr_sign: STD_LOGIC_VECTOR(3 downto 0) := "0000";
+  signal which_column_sign: STD_LOGIC_VECTOR(2 downto 0);
   signal done_sign, count_enable, clear_sign, hold_data_out_sign,
   read_data_in_sign, append_sign: STD_LOGIC;
 
@@ -35,21 +35,71 @@ architecture Behavioural of Control_FSM is
     clear <= clear_sign;
     hold_data_out <= hold_data_out_sign;
     read_data_in <= read_data_in_sign;
-    which_column <= which_column_sign
+    which_column <= which_column_sign;
     append <= append_sign;
 
--- Increment Counter
+-- Clock Counter
+  clk_ctr: process(clock, reset)
+  begin
+    if reset = '1' then
+      clk_ctr_sign <= "0000";
+    elsif rising_edge(clock) then
+      if ce = '1' and count_enable = '1' then
+        case curState is
+          when sFirstRound =>
+            if clk_ctr_sign = "0001" then
+              clk_ctr_sign <= "0000";
+            else
+              clk_ctr_sign <= clk_ctr_sign + 1;
+            end if;
+          when sLoopUntil10 => 
+            if clk_ctr_sign = "1001" then
+              clk_ctr_sign <= "0000";
+            else
+              clk_ctr_sign <= clk_ctr_sign + 1;
+            end if;
+          when sLastRound =>
+            if clk_ctr_sign = "1101" then
+              clk_ctr_sign <= "0000";
+            else
+              clk_ctr_sign <= clk_ctr_sign + 1;
+            end if;
+          when others => clk_ctr_sign <= clk_ctr_sign;
+        end case;
+      else
+        clk_ctr_sign <= clk_ctr_sign;
+      end if;
+    end if;
+  end process;
+
+-- Roundcounter
   incr_ctr: process(clock, reset)
   begin
     if reset = '1' then
       rcon_reg <= "0000";
     elsif rising_edge(clock) then
       if ce = '1' and count_enable = '1' then
-        if rcon_reg = "1011" then
-          rcon_reg <= "0000";
-        else
-          rcon_reg <= rcon_reg + 1;
-        end if;
+        case curState is
+          when sFirstRound =>
+            if clk_ctr_sign = "0001" then
+              rcon_reg <= rcon_reg + 1;
+            else
+              rcon_reg <= rcon_reg;
+            end if;
+          when sLoopUntil10 =>
+            if clk_ctr_sign = "1001" then
+              rcon_reg <= rcon_reg + 1;
+            else
+              rcon_reg <= rcon_reg;
+            end if;
+          when sLastRound =>
+           if clk_ctr_sign = "1101" then
+              rcon_reg <= rcon_reg + 1;
+            else
+              rcon_reg <= rcon_reg;
+            end if;
+          when others => rcon_reg <= rcon_reg;
+        end case;
       else
         rcon_reg <= rcon_reg;
       end if;

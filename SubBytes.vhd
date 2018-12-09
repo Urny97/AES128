@@ -6,8 +6,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity SubBytes is
   port(
     SB_in: in STD_LOGIC_VECTOR(31 downto 0);
-    SB_out: out STD_LOGIC_VECTOR(31 downto 0) 
-    -- blok nodig aan de uitgang die kolommen weer samenvoegt. Is dit de moeite?
+    SB_out: out STD_LOGIC_VECTOR(31 downto 0)
   );
 end SubBytes;
 

@@ -18,23 +18,29 @@ end AES128;
 architecture Behavioural of AES128 is
 
   -- signalen om componenten aan elkaar te hangen
-  signal key_out_ARK_in, ARK_out_reg_in, SB_out_shiftrow_in,
-         SR_out_MC_in, ARK_mux_out_ARK_in, MC_out_ARK_mux_in,
-         final_data_out, reg_out_SB_in, DI_reg_out,
+  signal key_out_ARK_in, to128bits_out_SR_in, to128bits_out_DO_mux_in,
+         SR_out_to32bits_in, final_data_out, DI_reg_out,
          DO_reg_out: STD_LOGIC_VECTOR(127 downto 0);
 
+  signal to32bits_out_ARK_mux_in, SB_out_to128bits_in,
+         to32bits_out_MC_in, ARK_out_reg_in, MC_out_ARK_mux_in,
+         ARK_mux_out_ARK_in, reg_out_SB_in: STD_LOGIC_VECTOR(31 downto 0);
+
   signal rcon_contr_rcon_keys: STD_LOGIC_VECTOR(3 downto 0);
+  signal which_column_sign: STD_LOGIC_VECTOR(2 downto 0);
   signal contr_out_ARK_mux_sel: STD_LOGIC_VECTOR(1 downto 0);
+
   signal done_sign, clear_sign, hold_data_out_sign,
-         contr_out_DO_mux_sel, read_data_in_sign: STD_LOGIC;
+         contr_out_DO_mux_sel, read_data_in_sign, append_sign: STD_LOGIC;
 
   component Control_FSM is
     port(
     clock, reset, ce: in STD_LOGIC;
     roundcounter: out STD_LOGIC_VECTOR(3 downto 0);
+    which_column: out STD_LOGIC_VECTOR(2 downto 0);
     ARK_mux_sel: out STD_LOGIC_VECTOR(1 downto 0);
     DO_mux_sel, done, clear, hold_data_out,
-    read_data_in: out STD_LOGIC
+    read_data_in, append: out STD_LOGIC
     );
   end component;
 
@@ -51,16 +57,17 @@ architecture Behavioural of AES128 is
 
   component AddRoundKey is
     port(
-      key_in: in std_logic_vector(127 downto 0);
-      data_in: in std_logic_vector(127 downto 0);
-      ARK_out: out std_logic_vector(127 downto 0)
+      key_in : in std_logic_vector(127 downto 0);
+	    data_in: in std_logic_vector(31 downto 0);
+      which_column: in std_logic_vector(2 downto 0);
+	    ARK_out: out std_logic_vector(31 downto 0)
     );
   end component;
 
   component SubBytes is
     port(
-      SB_in: in std_logic_vector( 127 downto 0 );
-      SB_out: out std_logic_vector( 127 downto 0 )
+      SB_in: in STD_LOGIC_VECTOR(31 downto 0);
+      SB_out: out STD_LOGIC_VECTOR(31 downto 0)
     );
   end component;
 
@@ -73,45 +80,125 @@ architecture Behavioural of AES128 is
 
   component MixColumn is
     port(
-      MC_in: in std_logic_vector (127 downto 0);
-		  MC_out: out std_logic_vector(127 downto 0)
+      MC_in : in std_logic_vector (31 downto 0);
+			MC_out : out std_logic_vector(31 downto 0)
     );
   end component;
 
+  component To32bits is
+    port(
+      data_128bits: in STD_LOGIC_VECTOR(127 downto 0);
+      which_column: in STD_LOGIC_VECTOR(2 downto 0);
+      data_32bits: out STD_LOGIC_VECTOR(31 downto 0)
+    );
+  end component;
+
+  component To128bits is
+    port(
+      clock, reset, ce, append_contr: in STD_LOGIC;
+      data_32bits: in STD_LOGIC_VECTOR(31 downto 0);
+      data_128bits: out STD_LOGIC_VECTOR(127 downto 0)
+    );
+  end component;
 begin
 
   -- instantiaties van componenten
-  KeyS: KeyScheduler port map(rcon_contr_rcon_keys, clock, reset, ce, key,
-                            key_out_ARK_in);
-  Ctl_FSM: Control_FSM port map(clock, reset, ce, rcon_contr_rcon_keys,
-                           contr_out_ARK_mux_sel, contr_out_DO_mux_sel,
-                           done_sign, clear_sign, hold_data_out_sign,
-                           read_data_in_sign);
-  ARK: AddRoundKey port map(key_out_ARK_in, ARK_mux_out_ARK_in, ARK_out_reg_in);
-  SB: SubBytes port map(reg_out_SB_in, SB_out_shiftrow_in);
-  SR: ShiftRow port map(SB_out_shiftrow_in, SR_out_MC_in);
-  MC: MixColumn port map(SR_out_MC_in, MC_out_ARK_mux_in);
+  KeyS: KeyScheduler port map(
+    roundcounter => rcon_contr_rcon_keys,
+    clock => clock, 
+    reset => reset, 
+    ce => ce, 
+    key => key,
+    key_out => key_out_ARK_in
+  );
+
+  Ctl_FSM: Control_FSM port map(
+    clock => clock, 
+    reset=> reset, 
+    ce => ce, 
+    roundcounter => rcon_contr_rcon_keys,
+    ARK_mux_sel => contr_out_ARK_mux_sel, 
+    DO_mux_sel => contr_out_DO_mux_sel,
+    done => done_sign,
+    clear => clear_sign,
+    hold_data_out => hold_data_out_sign,
+    read_data_in => read_data_in_sign,
+    which_column => which_column_sign,
+    append => append_sign
+  );
+
+  Input_to32bits: To32bits port map(
+    data_128bits => DI_reg_out,
+    which_column => which_column_sign,
+    data_32bits => to32bits_out_ARK_mux_in
+  );
+
+  ARK: AddRoundKey port map(
+    key_in => key_out_ARK_in, 
+    data_in => ARK_mux_out_ARK_in, 
+    ARK_out => ARK_out_reg_in,
+    which_column => which_column_sign
+  );
+
+  Output_to128bits: To128bits port map(
+    clock => clock,
+    reset => reset,
+    ce => ce,
+    append_contr => append_sign,
+    data_32bits => ARK_out_reg_in,
+    data_128bits => to128bits_out_DO_mux_in
+  );
+
+  SB: SubBytes port map(
+    SB_in => reg_out_SB_in, 
+    SB_out => SB_out_to128bits_in
+  );
+
+  SB_to128bits: To128bits port map(
+    clock => clock,
+    reset => reset,
+    ce => ce,
+    append_contr => append_sign,
+    data_32bits => SB_out_to128bits_in,
+    data_128bits => to128bits_out_SR_in
+  );
+
+  SR: ShiftRow port map(
+    shiftrow_in => to128bits_out_SR_in, 
+    shiftrow_out => SR_out_to32bits_in
+  );
+
+  SR_to32bits: To32bits port map(
+    data_128bits => SR_out_to32bits_in,
+    which_column => which_column_sign,
+    data_32bits => to32bits_out_MC_in
+  );
+
+  MC: MixColumn port map(
+    MC_in => to32bits_out_MC_in, 
+    MC_out => MC_out_ARK_mux_in
+  );
 
   data_out <= final_data_out;
   done <= done_sign;
 
   -- ARK mux
-  ARK_mux: process(contr_out_ARK_mux_sel, DI_reg_out, MC_out_ARK_mux_in, SR_out_MC_in)
+  ARK_mux: process(contr_out_ARK_mux_sel, to32bits_out_ARK_mux_in, MC_out_ARK_mux_in, to32bits_out_MC_in)
   begin
     case contr_out_ARK_mux_sel is
-      when "00" => ARK_mux_out_ARK_in <= DI_reg_out;
+      when "00" => ARK_mux_out_ARK_in <= to32bits_out_ARK_mux_in;
       when "01" => ARK_mux_out_ARK_in <= MC_out_ARK_mux_in;
-      when "11" => ARK_mux_out_ARK_in <= SR_out_MC_in;
+      when "11" => ARK_mux_out_ARK_in <= to32bits_out_MC_in;
       when others => ARK_mux_out_ARK_in <= (others => '0');
     end case;
   end process;
 
   -- DataOut mux
-  DO_mux: process(contr_out_DO_mux_sel, ARK_out_reg_in)
+  DO_mux: process(contr_out_DO_mux_sel, to128bits_out_DO_mux_in)
   begin
     case contr_out_DO_mux_sel is
       when '0' => final_data_out <= (others => '0');
-      when '1' => final_data_out <= DO_reg_out;
+      when '1' => final_data_out <= to128bits_out_DO_mux_in;
       when others => final_data_out <= (others => '0');
     end case;
   end process;
@@ -147,17 +234,17 @@ begin
   end process;
 
   --data_out_reg
-  DO_reg: process(clock, reset, ARK_out_reg_in, hold_data_out_sign)
-  begin
-    if reset = '1' then
-      DO_reg_out <= (others => '0');
-    elsif rising_edge(clock) then
-      if ce = '1' then  
-        if hold_data_out_sign = '1' then
-          DO_reg_out <= ARK_out_reg_in;
-        end if;
-      end if;
-    end if;
-  end process;
+  --DO_reg: process(clock, reset, ARK_out_reg_in, hold_data_out_sign)
+  --begin
+    --if reset = '1' then
+      --DO_reg_out <= (others => '0');
+    --elsif rising_edge(clock) then
+      --if ce = '1' then  
+        --if hold_data_out_sign = '1' then
+          --DO_reg_out <= ARK_out_reg_in;
+        --end if;
+      --end if;
+    --end if;
+  --end process;
 
 end Behavioural;
