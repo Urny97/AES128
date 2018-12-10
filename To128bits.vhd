@@ -26,7 +26,9 @@ Reg1: process(clock, reset)
       reg1_reg2 <= (others => '0');
     elsif rising_edge(clock) then
       if ce = '1' then
-          reg1_reg2 <= data_32bits;
+        reg1_reg2 <= data_32bits;
+      else 
+        reg1_reg2 <= reg1_reg2;
       end if;
     end if;
   end process;
@@ -38,7 +40,9 @@ Reg2: process(clock, reset)
       reg2_reg3 <= (others => '0');
     elsif rising_edge(clock) then
       if ce = '1' then
-          reg2_reg3 <= reg1_reg2;
+        reg2_reg3 <= reg1_reg2;
+      else 
+        reg2_reg3 <= reg2_reg3;
       end if;
     end if;
   end process;
@@ -50,7 +54,9 @@ Reg3: process(clock, reset)
       reg3_reg4 <= (others => '0');
     elsif rising_edge(clock) then
       if ce = '1' then
-          reg3_reg4 <= reg2_reg3;
+        reg3_reg4 <= reg2_reg3;
+      else
+        reg3_reg4 <= reg3_reg4;  
       end if;
     end if;
   end process;
@@ -62,7 +68,9 @@ Reg4: process(clock, reset)
       reg4_out <= (others => '0');
     elsif rising_edge(clock) then
       if ce = '1' then
-          reg4_out <= reg3_reg4;
+        reg4_out <= reg3_reg4;
+      else
+        reg4_out <= reg4_out;
       end if;
     end if;
   end process;

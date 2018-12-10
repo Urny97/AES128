@@ -27,7 +27,7 @@ architecture Behavioural of Control_FSM is
   signal rcon_reg, clk_ctr_sign: STD_LOGIC_VECTOR(3 downto 0) := "0000";
   signal which_column_sign: STD_LOGIC_VECTOR(2 downto 0);
   signal done_sign, count_enable, clear_sign, hold_data_out_sign,
-  read_data_in_sign, append_sign: STD_LOGIC;
+  read_data_in_sign, append_sign, clk_ctr_tick: STD_LOGIC;
 
   begin
     roundcounter <= rcon_reg;
@@ -48,23 +48,29 @@ architecture Behavioural of Control_FSM is
         case curState is
           when sFirstRound =>
             if clk_ctr_sign = "0001" then
+              clk_ctr_tick <= '1';
               clk_ctr_sign <= "0000";
             else
+              clk_ctr_tick <= '0';
               clk_ctr_sign <= clk_ctr_sign + 1;
             end if;
           when sLoopUntil10 => 
             if clk_ctr_sign = "1001" then
+              clk_ctr_tick <= '1';
               clk_ctr_sign <= "0000";
             else
+              clk_ctr_tick <= '0';
               clk_ctr_sign <= clk_ctr_sign + 1;
             end if;
           when sLastRound =>
             if clk_ctr_sign = "1101" then
+              clk_ctr_tick <= '1';
               clk_ctr_sign <= "0000";
             else
+              clk_ctr_tick <= '0';
               clk_ctr_sign <= clk_ctr_sign + 1;
             end if;
-          when others => clk_ctr_sign <= clk_ctr_sign;
+          when others => clk_ctr_sign <= "0000"; clk_ctr_tick <= '0';
         end case;
       else
         clk_ctr_sign <= clk_ctr_sign;
@@ -79,27 +85,11 @@ architecture Behavioural of Control_FSM is
       rcon_reg <= "0000";
     elsif rising_edge(clock) then
       if ce = '1' and count_enable = '1' then
-        case curState is
-          when sFirstRound =>
-            if clk_ctr_sign = "0001" then
-              rcon_reg <= rcon_reg + 1;
-            else
-              rcon_reg <= rcon_reg;
-            end if;
-          when sLoopUntil10 =>
-            if clk_ctr_sign = "1001" then
-              rcon_reg <= rcon_reg + 1;
-            else
-              rcon_reg <= rcon_reg;
-            end if;
-          when sLastRound =>
-           if clk_ctr_sign = "1101" then
-              rcon_reg <= rcon_reg + 1;
-            else
-              rcon_reg <= rcon_reg;
-            end if;
-          when others => rcon_reg <= rcon_reg;
-        end case;
+        if clk_ctr_tick <= '1' then
+          rcon_reg <= rcon_reg + 1;
+        else
+          rcon_reg <= rcon_reg;
+        end if;
       else
         rcon_reg <= rcon_reg;
       end if;
