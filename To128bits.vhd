@@ -3,9 +3,9 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity To128bits is
     port(
-        clock, reset, ce, append_contr: in STD_LOGIC;
-        data_32bits: in STD_LOGIC_VECTOR(31 downto 0);
-        data_128bits: out STD_LOGIC_VECTOR(127 downto 0)
+      clock, reset, ce, append_contr, hold: in STD_LOGIC;
+      data_32bits: in STD_LOGIC_VECTOR(31 downto 0);
+      data_128bits: out STD_LOGIC_VECTOR(127 downto 0)
     );
 end To128bits;
 
@@ -25,7 +25,7 @@ Reg1: process(clock, reset)
     if reset = '1' then
       reg1_reg2 <= (others => '0');
     elsif rising_edge(clock) then
-      if ce = '1' then
+      if ce = '1' and hold = '0' then
         reg1_reg2 <= data_32bits;
       else 
         reg1_reg2 <= reg1_reg2;
@@ -39,7 +39,7 @@ Reg2: process(clock, reset)
     if reset = '1' then
       reg2_reg3 <= (others => '0');
     elsif rising_edge(clock) then
-      if ce = '1' then
+      if ce = '1' and hold = '0' then
         reg2_reg3 <= reg1_reg2;
       else 
         reg2_reg3 <= reg2_reg3;
@@ -53,7 +53,7 @@ Reg3: process(clock, reset)
     if reset = '1' then
       reg3_reg4 <= (others => '0');
     elsif rising_edge(clock) then
-      if ce = '1' then
+      if ce = '1' and hold = '0' then
         reg3_reg4 <= reg2_reg3;
       else
         reg3_reg4 <= reg3_reg4;  
@@ -67,7 +67,7 @@ Reg4: process(clock, reset)
     if reset = '1' then
       reg4_out <= (others => '0');
     elsif rising_edge(clock) then
-      if ce = '1' then
+      if ce = '1' and hold = '0' then
         reg4_out <= reg3_reg4;
       else
         reg4_out <= reg4_out;

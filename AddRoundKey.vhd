@@ -13,7 +13,7 @@ architecture AddRoundKey_arch of AddRoundKey is
 begin
   process(key_in, data_in, which_column)
   begin
-    case (which_column) is
+    case which_column is
       -- 1e kolom
       when "001" => ARK_out <= key_in(127 downto 96) xor data_in;
       -- 2e kolom

@@ -19,8 +19,7 @@ architecture Behavioural of AES128 is
 
   -- signalen om componenten aan elkaar te hangen
   signal key_out_ARK_in, to128bits_out_SR_in, to128bits_out_DO_mux_in,
-         SR_out_to32bits_in, final_data_out, DI_reg_out,
-         DO_reg_out: STD_LOGIC_VECTOR(127 downto 0);
+         SR_out_to32bits_in, final_data_out, DI_reg_out: STD_LOGIC_VECTOR(127 downto 0);
 
   signal to32bits_out_ARK_mux_in, SB_out_to128bits_in,
          to32bits_out_MC_in, ARK_out_reg_in, MC_out_ARK_mux_in,
@@ -30,7 +29,7 @@ architecture Behavioural of AES128 is
   signal which_column_sign: STD_LOGIC_VECTOR(2 downto 0);
   signal contr_out_ARK_mux_sel: STD_LOGIC_VECTOR(1 downto 0);
 
-  signal done_sign, clear_sign, hold_data_out_sign,
+  signal done_sign, clear_sign,
          contr_out_DO_mux_sel, read_data_in_sign, append_sign: STD_LOGIC;
 
   component Control_FSM is
@@ -39,7 +38,7 @@ architecture Behavioural of AES128 is
     roundcounter: out STD_LOGIC_VECTOR(3 downto 0);
     which_column: out STD_LOGIC_VECTOR(2 downto 0);
     ARK_mux_sel: out STD_LOGIC_VECTOR(1 downto 0);
-    DO_mux_sel, done, clear, hold_data_out,
+    DO_mux_sel, done, clear,
     read_data_in, append: out STD_LOGIC
     );
   end component;
@@ -95,7 +94,7 @@ architecture Behavioural of AES128 is
 
   component To128bits is
     port(
-      clock, reset, ce, append_contr: in STD_LOGIC;
+      clock, reset, ce, append_contr, hold: in STD_LOGIC;
       data_32bits: in STD_LOGIC_VECTOR(31 downto 0);
       data_128bits: out STD_LOGIC_VECTOR(127 downto 0)
     );
@@ -121,7 +120,6 @@ begin
     DO_mux_sel => contr_out_DO_mux_sel,
     done => done_sign,
     clear => clear_sign,
-    hold_data_out => hold_data_out_sign,
     read_data_in => read_data_in_sign,
     which_column => which_column_sign,
     append => append_sign
@@ -146,7 +144,8 @@ begin
     ce => ce,
     append_contr => append_sign,
     data_32bits => ARK_out_reg_in,
-    data_128bits => to128bits_out_DO_mux_in
+    data_128bits => to128bits_out_DO_mux_in,
+    hold => done_sign
   );
 
   SB: SubBytes port map(
@@ -160,7 +159,8 @@ begin
     ce => ce,
     append_contr => append_sign,
     data_32bits => SB_out_to128bits_in,
-    data_128bits => to128bits_out_SR_in
+    data_128bits => to128bits_out_SR_in,
+    hold => '0' -- enkel bij de output moet de waarde behouden blijven als de chip klaar is met encrypteren.
   );
 
   SR: ShiftRow port map(
@@ -232,19 +232,5 @@ begin
       end if;
     end if;
   end process;
-
-  --data_out_reg
-  --DO_reg: process(clock, reset, ARK_out_reg_in, hold_data_out_sign)
-  --begin
-    --if reset = '1' then
-      --DO_reg_out <= (others => '0');
-    --elsif rising_edge(clock) then
-      --if ce = '1' then  
-        --if hold_data_out_sign = '1' then
-          --DO_reg_out <= ARK_out_reg_in;
-        --end if;
-      --end if;
-    --end if;
-  --end process;
 
 end Behavioural;
